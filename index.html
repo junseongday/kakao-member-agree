@@ -3,20 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>카카오 앱 동의 완료</title>
+  <title>카카오 앱 동의</title>
   <style>
     body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
     .card { background: #fff; border-radius: 16px; padding: 48px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.08); max-width: 400px; }
     .icon { font-size: 64px; margin-bottom: 16px; }
     h1 { font-size: 22px; color: #333; margin: 0 0 12px; }
     p { font-size: 15px; color: #666; margin: 0; line-height: 1.6; }
+    .loading { color: #999; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon">&#x2705;</div>
-    <h1>앱 동의가 완료되었습니다</h1>
-    <p>이 창을 닫아도 됩니다.</p>
+    <div class="icon" id="icon">&#x23F3;</div>
+    <h1 id="title">처리 중...</h1>
+    <p id="message">앱 연결을 완료하고 있습니다.</p>
   </div>
+  <iframe name="tokenFrame" style="display:none"></iframe>
+  <script>
+    (function() {
+      var params = new URLSearchParams(location.search);
+      var code = params.get('code');
+      var clientId = params.get('state');
+      var icon = document.getElementById('icon');
+      var title = document.getElementById('title');
+      var message = document.getElementById('message');
+
+      if (!code || !clientId) {
+        icon.innerHTML = '&#x2705;';
+        title.textContent = '카카오 앱 동의 페이지';
+        message.textContent = '공유받은 동의 링크를 통해 접속해주세요.';
+        return;
+      }
+
+      var redirectUri = location.origin + location.pathname;
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://kauth.kakao.com/oauth/token';
+      form.target = 'tokenFrame';
+
+      var fields = {
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        code: code
+      };
+
+      for (var key in fields) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+
+      setTimeout(function() {
+        icon.innerHTML = '&#x2705;';
+        title.textContent = '앱 동의가 완료되었습니다';
+        message.textContent = '이 창을 닫아도 됩니다.';
+      }, 1500);
+    })();
+  </script>
 </body>
 </html>
